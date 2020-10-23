@@ -1,0 +1,49 @@
+version: "3.5"
+
+services:
+  spring-app:
+    image: "${SPRING_APP_IMAGE_NAME}:${SPRING_APP_VERSION}"
+    environment:
+      - TZ=Asia/Seoul
+    volumes:
+      - "./log/spring:/workspace/log"
+    networks:
+      - app
+  nginx:
+    image: nginx
+    ports:
+      - "80:80"
+    environment:
+      - TZ=Asia/Seoul
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./log/nginx:/var/log/nginx
+    networks:
+      - app
+  filebeat:
+    build:
+      context: filebeat/
+      args:
+        ELK_VERSION: $ELK_VERSION
+    environment:
+      - TZ=Asia/Seoul
+      - LOGSTASH_URL=$LOGSTASH_URL
+      - PROJECT_NAME=$PROJECT_NAME
+    volumes:
+      - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - ./log/nginx:/var/log/nginx/:ro
+      - ./log/spring:/var/log/spring/:ro
+      - filebeat:/usr/share/filebeat/data/
+    networks: # use it for local docker elk network
+      - elk
+
+networks:
+  app:
+    name: nginx-spring
+    driver: bridge
+  elk: # use it for local docker elk network
+    external:
+      name: $ELK_NETWORK_NAME
+
+volumes:
+  filebeat:
