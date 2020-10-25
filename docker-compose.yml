@@ -5,12 +5,14 @@ services:
     image: "${SPRING_APP_IMAGE_NAME}:${SPRING_APP_VERSION}"
     environment:
       - TZ=Asia/Seoul
+    env_file:
+      - ./spring.env
     volumes:
       - "./log/spring:/workspace/log"
     networks:
       - app
   nginx:
-    image: nginx
+    image: nginx:latest
     ports:
       - "80:80"
     environment:
@@ -39,8 +41,8 @@ services:
 
 networks:
   app:
-    name: nginx-spring
-    driver: bridge
+    external:
+      name: $APP_NETWORK_NAME
   elk: # use it for local docker elk network
     external:
       name: $ELK_NETWORK_NAME
